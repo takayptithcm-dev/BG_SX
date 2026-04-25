@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply antialiased;
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+
+  /* Typography for parsed Markdown */
+  .editable-content h1, 
+  .editable-content h2, 
+  .editable-content h3, 
+  .editable-content h4 { 
+    @apply font-bold mt-8 mb-4; 
+    color: #1e293b;
+  }
+  .editable-content h1 { @apply text-2xl pb-2; border-bottom: 1px solid #e2e8f0; }
+  .editable-content h2 { @apply text-xl; }
+  .editable-content h3 { @apply text-lg; }
+  
+  .editable-content p { @apply mb-4 leading-relaxed; color: #475569; }
+  .editable-content ul { @apply list-disc pl-5 mb-4 space-y-1; color: #475569; }
+  .editable-content ol { @apply list-decimal pl-5 mb-4 space-y-1; color: #475569; }
+  .editable-content strong { @apply font-bold; color: #1e293b; }
+  
+  .editable-content table { 
+    @apply w-full border-collapse text-sm my-6 rounded-lg overflow-hidden; 
+    background-color: #ffffff;
+    box-shadow: 0 0 0 1px #e2e8f0;
+  }
+  .editable-content th { 
+    @apply px-4 py-3 text-left font-bold; 
+    background-color: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+  }
+  .editable-content td { 
+    @apply px-4 py-3 align-top; 
+    border-bottom: 1px solid #f1f5f9;
+    color: #475569;
+  }
+  .editable-content tr:last-child td {
+    border-bottom-width: 0;
+  }
+  .editable-content tr:nth-child(even) { 
+    background-color: #f8fafc; 
+  }
+  .editable-content blockquote { 
+    @apply pl-4 italic my-4 py-2 rounded-r-lg; 
+    border-left: 4px solid #3b82f6;
+    color: #64748b;
+    background-color: #eff6ff;
+  }
+
+  /* Inline editing focus style */
+  .editable-content {
+    @apply outline-none transition-colors duration-200;
+  }
+  .editable-content:focus {
+    @apply rounded-lg p-2 -m-2;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    background-color: #ffffff;
+  }
+
+  /* html2canvas/html-to-image workaround */
+  #pdf-content, #pdf-content * {
+    border-color: #e2e8f0;
+    outline-color: transparent;
+    text-decoration-color: currentColor;
+    caret-color: currentColor;
+    column-rule-color: currentColor;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .exporting-pdf .no-print {
+    display: none !important;
+  }
+}
+
+@media print {
+  body {
+    background-color: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-area {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+}
