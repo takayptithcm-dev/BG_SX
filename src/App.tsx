@@ -15,7 +15,7 @@ function cn(...inputs: ClassValue[]) {
 // Initialize Gemini
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || process.env.GEMINI_API_KEY });
 
-const RATE_CARD_TEXT = `RATECARD THI CÔNG 2026 (NHÀ CUNG CẤP: NEWLIFE)
+const RATE_CARD_TEXT = `RATECARD THI CÔNG 2026
 
 1. SÀN SÂN KHẤU & SÀN THÔ
 - Ván 18mm trải sàn: Ván nguyên = 100.000 đ/m² (Thuê) - 250.000 đ/m² (Bán) | Ván cắt = 150.000 đ/m² (Thuê) - 300.000 đ/m² (Bán)
