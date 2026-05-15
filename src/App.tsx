@@ -1,9 +1,10 @@
 import { useState, useRef, DragEvent, ChangeEvent, useEffect } from 'react';
-import { Upload, FileImage, X, Loader2, Calculator, AlertCircle, FileText, Printer, ImagePlus, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Upload, FileImage, X, Loader2, Calculator, AlertCircle, FileText, Printer, ImagePlus, ArrowLeft, CheckCircle2, ClipboardList, Copy, Check, FileSpreadsheet } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { marked } from 'marked';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
+import * as XLSX from 'xlsx';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -14,6 +15,85 @@ function cn(...inputs: ClassValue[]) {
 // Initialize Gemini
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || process.env.GEMINI_API_KEY });
 
+const RATE_CARD_TEXT = `RATECARD THI CÔNG 2026 (NHÀ CUNG CẤP: NEWLIFE)
+
+1. SÀN SÂN KHẤU & SÀN THÔ
+- Ván 18mm trải sàn: Ván nguyên = 100.000 đ/m² (Thuê) - 250.000 đ/m² (Bán) | Ván cắt = 150.000 đ/m² (Thuê) - 300.000 đ/m² (Bán)
+- Khung sắt tải trọng lót ván ép 18mm (Sàn nguyên): Cao 0.1m = 150.000 đ/m² | Cao 0.2m-1.1m = 200.000-350.000 đ/m² | Cao 1.2m-1.6m = 350.000 đ/m² | Cao 1.7m-1.9m = 450.000-650.000 đ/m² | Cao 2m-2.3m = 650.000-750.000 đ/m²
+- Khung sắt tải trọng lót ván ép 18mm (Sàn cắt): Cao 0.1m = 650.000 đ/m² | Cao 0.2m-1m = 750.000-1.000.000 đ/m² | Cao 1.1m-1.6m = 450.000-650.000 đ/m² | Cao 1.7m-1.9m = 650.000-750.000 đ/m²
+
+2. SÀN XE HƠI & SÀN DƯỚI NƯỚC
+- Sàn dưới 4 tấn (Sàn Nguyên 2 lớp ván ép): Cao 0.1m = 500.000 đ/m² | Cao 0.2m-0.6m = 650.000 đ/m² | Cao 0.7m-1.3m = 1.200.000 đ/m²
+- Sàn dưới 4 tấn (Sàn Cắt 2 lớp ván ép): Cao 0.1m = 650.000 đ/m² | Cao 0.2m-0.6m = 850.000 đ/m²
+- Sàn trên 4 tấn: Cao 0.1m = 500.000 đ/m²
+- Khung sắt tải trọng lót ván ép 18mm (Sàn dưới nước): Báo giá theo thực tế
+
+3. CHẤT LIỆU TRẢI SÀN
+- Thảm nỉ gân mỏng (trải sân khấu, gia cố ghim): 70.000 đ/m²
+- Thảm nỉ (trải KS, có keo chuyên dụng 3m): 90.000 đ/m²
+- Thảm dày nội thất (văn phòng dày 1p): 250.000 đ/m²
+- Thảm lông móc đan xù: 400.000 đ/m²
+- Thảm cỏ 1p: 150.000 đ/m² | Thảm cỏ 2p: 200.000 đ/m² | Thảm cỏ 3p: 250.000 đ/m²
+- Trải thí lấy mặt phẳng (Ván MDF 9ly / Foamex 9ly / Ván nhựa Pima 5li): 150.000 - 180.000 đ/m²
+- Hiflex thường in mặt ngược: 80.000 đ/m² | Hiflex 2 da in: 120.000 đ/m²
+- Thảm cũ tận dụng trải sàn: 25.000 đ/m²
+- Kính cường lực 9li: 1.350.000 đ/m²
+- Decal: MDF 9ly dán decal = 500.000 đ/m² | MDF 9ly dán decal cán màng chống trầy Mờ = 850.000 đ/m²
+- Simily thường / bóng (Bên dưới lót 1 lớp thảm): 140.000 đ/m²
+
+4. MẶT DỰNG SÀN
+- Ván ép 5li Thảm hoặc hiflex: Cao 0.1m = 85.000 đ/m tới | Cao 0.2m-0.6m = 100.000 đ/m tới | Cao từ 0.7m = 150.000 đ/m2
+- Thảm cỏ 1p: Cao 0.1m = 125.000 đ/m tới | Cao 0.2m-0.6m = 125.000 đ/m tới | Cao từ 0.7m = 150.000 đ/m2
+- Thảm cỏ 2p: Cao 0.1m = 135.000 đ/m tới | Cao 0.2m-0.6m = 135.000 đ/m tới | Cao từ 0.7m = 170.000 đ/m2
+- Thảm cỏ 3p: Cao 0.1m = 150.000 đ/m tới | Cao 0.2m-0.6m = 150.000 đ/m tới | Cao từ 0.7m = 185.000 đ/m2
+- MDF 9li dán Decal: Cao 0.1m = 125.000 đ/m tới | Cao 0.2m-0.6m = 250.000 đ/m tới | Cao từ 0.7m = 300.000 đ/m2
+
+5. TAM CẤP
+- Nhất cấp: 450.000 đ/m tới | Nhị cấp: 550.000 đ/m tới | Tam cấp: 650.000 đ/m tới
+- Tam cấp khác chiều cao: 1.000.000 đ/m tới/1 bậc
+- Tam cấp cong (bước 30cm, dựng 20cm): 1.500.000 đ/m tới/1 bậc
+
+6. BACKDROP & VÁCH
+- Vách Gỗ (Khung sắt ốp ván MDF 9ly/vách gỗ dán decal/PP in KTS): 1 mặt = 500.000 đ/m2 | 2 mặt (1 xương) = 850.000 đ/m2
+- Vách Gỗ sơn nước: 1 mặt = 550.000 đ/m2 | 2 mặt (1 xương) = 950.000 đ/m2
+- Vách Formex (Khung sắt ốp foamex 9ly dán decal/PP in KTS): 1 mặt = 550.000 đ/m2 | 2 mặt (1 xương) = 900.000 đ/m2
+- Hiflex (Khung sắt căng hiflex 2 da in): 1 mặt = 200.000 đ/m2 | 2 mặt (1 xương) = 350.000 đ/m2
+- Hiflex (Khung sắt căng vải đen lớp 1, căng hiflex thường in): 1 mặt = 230.000 đ/m2 | 2 mặt (1 xương) = 350.000 đ/m2
+- Khung sắt căng Hiflex in UV, bạt UV Korea: 1 mặt = 550.000 đ/m2
+- Vải đen: Khung sắt căng vải đen 1 mặt = 150.000 đ/m2 | Vải đen che hậu bắn khung có sẵn = 70.000 đ/m2
+- In chưa khung (Canvas): 400.000 đ/m2
+
+7. BANNER VÀ STANDEE
+- Không khung: Hiflex trắng thường = 50.000 đ/m2 | Hiflex thường in = 80.000 đ/m2 | Hiflex 2 da in = 150.000 đ/m2 | Hiflex xỏ cây 2 đầu = 170.000 đ/m2
+- Standee gỗ dán PP in KTS: 1 mặt = 1.450.000 đ/bộ | 2 mặt = 1.450.000 đ/bộ
+- Dán 1 lớp decal đen, dán PP in KTS (standee khách dùng lại): 500.000 đ/bộ
+- Standee chữ X (cán mờ xỏ khoen 4 góc KT: 1.8m x 0.8m): 450.000 đ/bộ
+- Standee hộp nhôm (PP không keo cán mờ KT: 2m x 0.8m): 500.000 đ/bộ
+- Standee chữ L (Khung sắt ốp foamex 9ly dán PP): KT 2m x 0.8m = 1.450.000 đ/bộ | KT 1.8m x 0.8m = 1.250.000 đ/bộ
+
+8. LED NEON VÀ ĐÈN
+- LED Neon (nẹp chỉ sơn theo màu/nẹp U sơn theo màu): 150.000 đ/m tới
+- LED dán theo màu: 90.000 đ/m tới
+- Spotlight 20W (sơn theo màu + cần): 650.000 đ/bộ
+- Pha LED: 20W = 650.000 đ/bộ | 30W = 650.000 đ/bộ | 50W = 750.000 đ/bộ
+
+9. HỘP ĐÈN VÀ DIECUT
+- Hộp đèn Mica (Mica sữa cắt CNC lên foamex, đánh đèn led): <=0.6m = 3.000.000 đ/m tới | >= 0.7m = 3.500.000 đ/m2
+- Hộp đèn Hiflex 3M (in UV, chip led Samsung): 4.200.000 đ/m2
+- Hộp đèn BULD (Khung gỗ MDF gắn đèn trái chanh, sử dụng bóng 5W): <=0.6m = 2.850.000 đ/m2 | >=0.6m = 2.850.000 đ/m2
+- Diecut (Foamex 9ly / MDF dán aw cắt CNC lên thành tạo hình): Hình = 1.000.000 đ/m2 | Chữ = 1.450.000 đ/m2
+- Cắt CNC dán aw: Foamex 18mm / MDF 18mm = 1.200.000 đ/m2
+
+10. KHÁC
+- Bảng mã sắt sơn theo màu: 5li KT 30x40cm = 1.000.000 đ/bộ | 10li KT 0.8x1.2m = 2.200.000 đ/bộ
+- Ray trượt led: Thủ công = 4.500.000 đ/gói | Âm sàn chống lật trong nhà = 6.500.000 đ/gói | Âm sàn ngoài trời = 6.500.000 đ/gói
+- Mica 5li: trơn = 1.250.000 đ/m2 | Cắt CNC/Lazer = 1.450.000 đ/m2
+- Thùng phiếu: 20cm = 650.000 đ/cái | 30cm = 1.200.000 đ/cái | 40cm = 1.500.000 đ/cái | 50cm = 1.800.000 đ/cái
+
+11. VẬN CHUYỂN VÀ NHÂN CÔNG
+- Xe tải: Xe 1.5 tấn = 1.200.000 đ/chuyến | Xe 2 tấn = 1.500.000 đ/chuyến | Xe 5 tấn = 2.500.000 đ/chuyến | Xe 8 tấn = 3.500.000 đ/chuyến
+- Nhân sự: Quản lý = 800.000 đ/người | Thợ chính = 700.000 đ/người | Thợ phụ = 450.000 đ/người | Phí tăng ca sau 17h = 1.500.000 đ/người`;
+
 const SYSTEM_PROMPT = `Bạn là Giám đốc Sản xuất (Production Manager) kiêm Chuyên gia Bóc tách Bản vẽ & Dự toán Ngân sách (Estimator) có 10 năm kinh nghiệm chuyên thi công Booth Activation, POSM, Decor TTTM và Event BTL tại Việt Nam.
 
 Nhiệm vụ chính:
@@ -23,42 +103,7 @@ Nếu người dùng upload thêm Rate Card mới → Dùng Rate Card mới thay
 Xuất báo giá theo đúng 4 nhóm hạng mục bắt buộc.
 
 RATE CARD CHÍNH THỨC (ƯU TIÊN TUYỆT ĐỐI - PHẦN SẢN XUẤT)
-I. SÀN
-Sàn dán AW (Ván MDF hệ xương gỗ dán AW): Ván nguyên = 500.000 đ/m² | Ván cắt = 550.000 đ/m²
-Khung sắt tải trọng lót ván MDF (Sàn nguyên): Cao 0.1m = 750.000 đ/m² | Cao 0.2m→1.1m = 850.000 đ/m²
-Khung sắt tải trọng lót ván MDF (Sàn cắt): Cao 0.1m = 750.000 đ/m² | Cao 0.2m→1m = 1.100.000 đ/m²
-Thảm nỉ gân mỏng trải sàn sân khấu (có gim) = 65.000 đ/m²
-Thảm nỉ trải sàn KS có keo 3M = 75.000 đ/m²
-MDF 9li dán Decal: cao 0.1m = 50.000 đ/md | cao 0.2–0.6m = 140.000 đ/md | cao ≥0.7m = 320.000 đ/m²
-
-II. BACKDROP
-Vách gỗ (Khung sắt ốp MDF 9ly dán decal/PP): 1 mặt = 550.000 đ/m² | 2 mặt = 850.000 đ/m²
-Vách gỗ sơn nước: 1 mặt = 600.000 đ/m² | 2 mặt = 900.000 đ/m²
-Vách Formex 9ly dán decal: 1 mặt = 650.000 đ/m² | 2 mặt = 950.000 đ/m²
-Khung sắt căng Hiflex 2 da in: 1 mặt = 280.000 đ/m² | 2 mặt = 450.000 đ/m²
-Khung sắt căng Hiflex in UV (bạt UV Korea): 1 mặt = 550.000 đ/m²
-Khung sắt căng vải đen: 1 mặt = 300.000 đ/m²
-Vải đen che hậu = 50.000 đ/m²
-In Canvas (chưa khung) = 200.000 đ/m² (khổ 1.5m)
-
-III. STANDEE
-Standee chân tụ đứng (Khung sắt ốp foamex 9ly dán PP in KTS)
-KT 2mH × 0.8mL × 1 mặt = 1.400.000 đ/bộ
-KT 1.8mH × 0.8mL × 2 mặt = 1.800.000 đ/bộ
-
-IV. LED NEON & ĐÈN
-LED Neon (nẹp chỉ 1 phân hoặc nẹp U sơn màu) = 320.000 đ/md
-LED dán theo màu = 150.000 đ/md
-Spotlight 20W (sơn màu + cần) = 350.000 đ/bộ
-Đèn pha LED 20W = 350.000 đ/bộ | 30W = 400.000 đ/bộ | 50W = 500.000 đ/bộ
-
-V. HỘP ĐÈN & DIECUT
-Hộp đèn Mica (CNC + LED siêu sáng): ≤0.6m = 3.200.000 đ/md | ≥0.7m = 3.800.000 đ/m²
-Hộp đèn Hiflex 3M (chip LED Samsung) = 1.200.000 đ/m²
-Diecut Foamex 9ly (hình) = 1.000.000 đ/m² | (chữ) = 1.300.000 đ/m²
-Diecut MDF mặt trước (hình) = 900.000 đ/m² | (chữ) = 1.150.000 đ/m²
-Foamex 18mm cắt CNC dán AW = 1.200.000 đ/m²
-MDF 18mm cắt CNC dán AW = 550.000 đ/m²
+${RATE_CARD_TEXT}
 
 CẤU TRÚC BÁO GIÁ BẮT BUỘC
 Luôn trả lời bằng 4 bảng Markdown theo thứ tự:
@@ -98,6 +143,8 @@ export default function App() {
   const [htmlResult, setHtmlResult] = useState('');
   const [error, setError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [showRateCardModal, setShowRateCardModal] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const renderInputRef = useRef<HTMLInputElement>(null);
@@ -152,6 +199,55 @@ export default function App() {
 
   const removeRenderImage = (index: number) => {
     setRenderImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCopyRateCard = async () => {
+    try {
+      await navigator.clipboard.writeText(RATE_CARD_TEXT);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  const handleExportExcel = () => {
+    const element = document.getElementById('pdf-content');
+    if (!element) return;
+
+    const tables = element.querySelectorAll('table');
+    if (tables.length === 0) {
+      alert('Không tìm thấy bảng dữ liệu nào để xuất Excel.');
+      return;
+    }
+
+    const wb = XLSX.utils.book_new();
+
+    tables.forEach((table, index) => {
+      // Look for a heading immediately preceding the table to use as sheet name (if available)
+      let sheetName = `Bang_Gia_${index + 1}`;
+      let prevElement = table.previousElementSibling;
+      
+      // Navigate up to 2 siblings to find a heading
+      for (let i = 0; i < 2; i++) {
+        if (prevElement && /^H[1-6]$/i.test(prevElement.tagName)) {
+          const text = prevElement.textContent?.trim() || '';
+          if (text) {
+             // Excel sheet name max 31 chars and no special chars like []*:/?\
+            sheetName = text.replace(/[\[\]*?:/\\]/g, '').substring(0, 31);
+          }
+          break;
+        }
+        if (prevElement) {
+          prevElement = prevElement.previousElementSibling;
+        }
+      }
+
+      const ws = XLSX.utils.table_to_sheet(table);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+
+    XLSX.writeFile(wb, 'Bao_Gia_Du_Toan.xlsx');
   };
 
   const handleExportPDF = () => {
@@ -239,7 +335,7 @@ export default function App() {
             </div>
           </div>
           
-          {view === 'result' && (
+          {view === 'result' ? (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setView('input')}
@@ -249,11 +345,28 @@ export default function App() {
                 Quay lại
               </button>
               <button
+                onClick={handleExportExcel}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-all shadow-md shadow-emerald-500/20 active:scale-95"
+              >
+                <FileSpreadsheet size={16} />
+                Xuất Excel
+              </button>
+              <button
                 onClick={handleExportPDF}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-all shadow-md shadow-blue-500/20 active:scale-95"
               >
                 <Printer size={16} />
                 Xuất PDF
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowRateCardModal(true)}
+                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors border border-slate-200"
+              >
+                <ClipboardList size={16} />
+                Xem Rate Card
               </button>
             </div>
           )}
@@ -459,6 +572,71 @@ export default function App() {
         )}
 
       </main>
+
+      {/* RATE CARD MODAL */}
+      {showRateCardModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/80">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 text-blue-700 p-2 rounded-lg">
+                  <ClipboardList size={20} />
+                </div>
+                <h3 className="font-bold text-lg text-slate-800">Rate Card Hệ Thống</h3>
+              </div>
+              <button 
+                onClick={() => setShowRateCardModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* Modal Content - Rate Card code formatting */}
+            <div className="p-6 overflow-y-auto flex-1 bg-slate-50 font-mono text-sm">
+              <pre className="whitespace-pre-wrap text-slate-700 leading-relaxed bg-white border border-slate-200 rounded-xl p-5 shadow-inner">
+                {RATE_CARD_TEXT}
+              </pre>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-white">
+              <p className="text-xs text-slate-500 max-w-xs">
+                Bạn có thể sao chép Rate Card này để tham khảo hoặc chỉnh sửa thành Custom Rate Card.
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowRateCardModal(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Đóng
+                </button>
+                <button
+                  onClick={handleCopyRateCard}
+                  className={cn(
+                    "px-4 py-2 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-all shadow-md active:scale-95",
+                    isCopied ? "bg-green-600 hover:bg-green-700 shadow-green-500/20" : "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20"
+                  )}
+                >
+                  {isCopied ? (
+                    <>
+                      <Check size={16} />
+                      Đã sao chép!
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={16} />
+                      Sao chép Rate Card
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
